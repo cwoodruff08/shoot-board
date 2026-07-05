@@ -171,6 +171,9 @@
   .attr .swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .attr.persp .swatch{background:var(--amber)}
   .attr.purpose .swatch{background:var(--plum)}
+  .attr.comp.cat-frame .swatch{background:var(--slate)}
+  .attr.comp.cat-move .swatch{background:var(--rust)}
+  .attr.speed .swatch{background:var(--moss)}
   .attr select{font-family:'Inter',sans-serif;font-size:12px;color:var(--ink);
     background:var(--paper-2);border:1px solid var(--line);border-radius:2px;
     padding:2px 4px;max-width:150px;cursor:pointer}
@@ -437,6 +440,10 @@ const CATMAP={"Movement":"move","Framing & Angle":"frame","Time & Speed":"time"}
 /* per-shot attributes (single-select) — [value, blurb] with defs in ATTR_DEFS */
 const PERSPECTIVES=["Objective / Neutral","POV","Subjective","Over-the-shoulder","Reverse angle","Frame-in-frame"];
 const PURPOSES=["Establishing","Master / Coverage","Action beat","Reaction","Insert / Cut-in","Cutaway","B-roll","Beauty / Hero","Transition","Motivation"];
+/* names pulled from the library, used for the complement + time dropdowns on each card */
+const FRAMING_NAMES=LIBRARY["Framing & Angle"].map(s=>s[0]);
+const MOVEMENT_NAMES=LIBRARY["Movement"].map(s=>s[0]);
+const TIME_NAMES=["1X Speed"].concat(LIBRARY["Time & Speed"].map(s=>s[0]));
 const ATTR_DEFS={
   "Objective / Neutral":["The camera is an outside observer, not tied to any character's viewpoint — the unmarked default most shots use.","Whenever you're simply watching the scene rather than aligning with someone's experience; the baseline when no other perspective applies.","It isn't 'no choice' — decide where the neutral observer stands, since even a neutral camera has a point of view."],
   "POV":["The frame is the subject's literal viewpoint — what they see, subject unseen.","Put the viewer inside the experience — driving, looking down, holding something.","Add subtle head-motion and eye-level height so it reads as a person, not a camera."],
@@ -489,6 +496,7 @@ const DEFS={
   "Dutch Angle":["The camera is rolled so the horizon sits at a deliberate tilt.","Unease, tension, or a world that's off-balance.","Commit to a clear angle — a tiny tilt looks like a mistake, not a choice."],
   "Bird's-eye":["Camera looks straight down from directly overhead.","Reveal patterns, geometry, layout, or a god's-eye overview.","A drone or high mount; symmetry and top-down motion make these sing."],
   "Timelapse":["Frames captured at intervals and sped up, compressing a long span into seconds.","Show passage of time — clouds, tide, a build, a sunset.","Lock the camera solid and use an ND filter; even tiny bumps ruin the sequence."],
+  "1X Speed":["Normal, real-time playback — the default speed with no time manipulation.","The baseline for most shots; pick this when you're not slowing, speeding, or lapsing time.","It's the honest default — only reach for the other Time & Speed options when the shot genuinely calls for it."],
   "Hyperlapse":["A moving timelapse — the camera travels between each captured frame.","Compress time and space at once for a dynamic sense of travel.","Pick a fixed anchor point in frame and reposition consistently between shots."],
   "Slow-mo":["Recorded at a high frame rate, played back slow to stretch a moment.","Emphasize action, emotion, or detail — splashes, impacts, reactions.","Shoot 120fps+ in bright light; add extra shutter speed to keep it crisp."],
   "Speed ramp":["Playback speed shifts within one shot — e.g. normal into slow-mo and back.","Punch a specific beat inside a continuous move without cutting.","Shoot at the high frame rate throughout, then ramp in the edit at a natural motion beat."],
@@ -588,12 +596,17 @@ function optionsHtml(values,selected){
   values.forEach(v=>{h+='<option value="'+v+'"'+(v===selected?' selected':'')+'>'+v+'</option>'});
   return h;
 }
-function makeShot(name,desc,cat,notes,dur,persp,purpose,custom){
-  notes=notes||'';dur=dur||'';persp=persp||'';purpose=purpose||'';
+function makeShot(name,desc,cat,notes,dur,persp,purpose,custom,comp,speed){
+  notes=notes||'';dur=dur||'';persp=persp||'';purpose=purpose||'';comp=comp||'';speed=speed||'';
   const card=document.createElement('div');
   card.className='shot cat-'+cat+(custom?' shot-custom':'');
   card.dataset.name=name;card.dataset.desc=desc;card.dataset.cat=cat;
   if(custom)card.dataset.custom='1';
+  // complement dropdown: opposite axis from the card's own category
+  let compList,compLabel,compClass;
+  if(cat==='frame'){compList=MOVEMENT_NAMES;compLabel='Movement';compClass='move';}
+  else if(cat==='move'){compList=FRAMING_NAMES;compLabel='Framing';compClass='frame';}
+  else {compList=FRAMING_NAMES;compLabel='Framing';compClass='frame';} // time (or custom) pairs with framing
   const nameHtml=custom
     ? '<input class="shot-name-input" placeholder="Name this shot\u2026" value="'+name.replace(/"/g,'&quot;')+'">'
     : '<span class="shot-name def-able">'+name+'</span>';
@@ -606,6 +619,12 @@ function makeShot(name,desc,cat,notes,dur,persp,purpose,custom){
       '<button class="del" title="Remove">\u00d7</button>'+
     '</div>'+
     '<div class="shot-attrs">'+
+      '<span class="attr comp cat-'+compClass+'"><span class="swatch"></span><label>'+compLabel+'</label>'+
+        '<select class="comp-sel">'+optionsHtml(compList,comp)+'</select>'+
+        '<button class="adef" title="Define">?</button></span>'+
+      '<span class="attr speed"><span class="swatch"></span><label>Time / Speed</label>'+
+        '<select class="speed-sel">'+optionsHtml(TIME_NAMES,speed)+'</select>'+
+        '<button class="adef" title="Define">?</button></span>'+
       '<span class="attr persp"><span class="swatch"></span><label>Perspective</label>'+
         '<select class="persp-sel">'+optionsHtml(PERSPECTIVES,persp)+'</select>'+
         '<button class="adef" title="Define">?</button></span>'+
@@ -629,15 +648,17 @@ function makeShot(name,desc,cat,notes,dur,persp,purpose,custom){
   }else{
     card.querySelector('.shot-name').addEventListener('click',e=>showDef(name,cat,e.currentTarget));
   }
-  // attribute definition buttons
+  // dropdown definition buttons
+  const compSel=card.querySelector('.comp-sel'),speedSel=card.querySelector('.speed-sel');
   const perspSel=card.querySelector('.persp-sel'),purposeSel=card.querySelector('.purpose-sel');
-  const perspBtn=perspSel.nextElementSibling,purposeBtn=purposeSel.nextElementSibling;
-  function syncBtn(sel,btn){btn.disabled=!sel.value}
-  syncBtn(perspSel,perspBtn);syncBtn(purposeSel,purposeBtn);
-  perspSel.addEventListener('change',()=>syncBtn(perspSel,perspBtn));
-  purposeSel.addEventListener('change',()=>syncBtn(purposeSel,purposeBtn));
-  perspBtn.addEventListener('click',e=>{if(perspSel.value)showAttrDef(perspSel.value,'persp',e.currentTarget)});
-  purposeBtn.addEventListener('click',e=>{if(purposeSel.value)showAttrDef(purposeSel.value,'purpose',e.currentTarget)});
+  function pairBtn(sel){return sel.nextElementSibling}
+  function syncBtn(sel){pairBtn(sel).disabled=!sel.value}
+  [compSel,speedSel,perspSel,purposeSel].forEach(s=>{syncBtn(s);s.addEventListener('change',()=>syncBtn(s))});
+  // comp + speed use shot DEFS (their values are real shots); persp/purpose use ATTR_DEFS
+  pairBtn(compSel).addEventListener('click',e=>{if(compSel.value)showDef(compSel.value,compClass,e.currentTarget)});
+  pairBtn(speedSel).addEventListener('click',e=>{if(speedSel.value)showDef(speedSel.value,'time',e.currentTarget)});
+  pairBtn(perspSel).addEventListener('click',e=>{if(perspSel.value)showAttrDef(perspSel.value,'persp',e.currentTarget)});
+  pairBtn(purposeSel).addEventListener('click',e=>{if(purposeSel.value)showAttrDef(purposeSel.value,'purpose',e.currentTarget)});
   return card;
 }
 
@@ -700,7 +721,7 @@ function makeScene(opts){
   (opts.shots||[]).forEach(sh=>{
     let arr=Array.isArray(sh)?{name:sh[0],dur:sh[1],notes:sh[2]||''}:Object.assign({},sh);
     if(arr.custom){
-      zone.appendChild(makeShot(arr.name||'',arr.desc||'',arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',true));
+      zone.appendChild(makeShot(arr.name||'',arr.desc||'',arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',true,arr.comp||'',arr.speed||''));
       return;
     }
     // migrate legacy cards that are now per-shot attributes
@@ -709,7 +730,7 @@ function makeScene(opts){
       else if(PERSPECTIVES.indexOf(arr.name)>-1){arr.persp=arr.persp||arr.name;arr.name='Shot';}
     }
     const info=CATLOOKUP[arr.name]||{desc:arr.desc||'',cat:arr.cat||'move'};
-    zone.appendChild(makeShot(arr.name,arr.desc||info.desc,info.cat||arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||''));
+    zone.appendChild(makeShot(arr.name,arr.desc||info.desc,info.cat||arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',false,arr.comp||'',arr.speed||''));
   });
   refreshEmpty(zone);
   scenesEl.appendChild(scene);
@@ -820,7 +841,8 @@ function serialize(){
       shots:[].slice.call(sc.querySelectorAll('.shot')).map(s=>({
         name:s.dataset.name,desc:s.dataset.desc,cat:s.dataset.cat,custom:s.dataset.custom==='1',
         dur:s.querySelector('.dur-in').value,notes:s.querySelector('.shot-notes').value,
-        persp:s.querySelector('.persp-sel').value,purpose:s.querySelector('.purpose-sel').value
+        persp:s.querySelector('.persp-sel').value,purpose:s.querySelector('.purpose-sel').value,
+        comp:s.querySelector('.comp-sel').value,speed:s.querySelector('.speed-sel').value
       }))
     });
   });
