@@ -151,7 +151,13 @@
   .shot.cat-time .dot{background:var(--moss)}
   .shot.cat-purpose .dot{background:var(--plum)}
   .shot-name{font-family:'Archivo',sans-serif;font-weight:700;font-size:14px}
-  .shot-desc{font-size:11px;color:var(--ink-soft);font-style:italic;flex:1}
+  .shot-desc{font-size:11px;color:var(--ink-soft);font-style:italic}
+  .shot-id{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:0 11px 6px}
+  .shot-title{flex:1;min-width:120px;
+    font-family:'Archivo',sans-serif;font-weight:600;font-size:14px;color:var(--ink);
+    background:var(--paper-2);border:1px solid var(--line);border-radius:3px;padding:5px 9px}
+  .shot-title:focus{outline:none;border-color:var(--slate)}
+  .shot-title::placeholder{color:var(--ink-soft);font-style:italic;font-weight:400}
   .shot-dur{display:flex;align-items:center;gap:4px;font-family:'Spline Sans Mono',monospace;
     font-size:11px;color:var(--ink-soft)}
   .shot-dur input{width:42px;background:var(--paper-2);border:1px solid var(--line);
@@ -400,20 +406,22 @@ const LIBRARY = {
     ["Wide / Establishing","set the location & context"],
     ["Medium Shot","waist up — the conversational workhorse"],
     ["Medium Close-Up","chest up — dialogue standard"],
-    ["Face / CU","tight on the face — emotion, reaction"],
+    ["Face Close Up","tight on the face — emotion, reaction"],
     ["Extreme Close-Up","eyes or a single detail — intensity"],
     ["Two-Shot / Group","two+ subjects framed together — relationship"],
     ["Insert / Detail","isolated object or texture — cutaway"],
-    ["Low Shot","angled up from below — power, scale, speed"],
+    ["Low Angle","angled up from below — power, scale, speed"],
+    ["High Angle","angled down from above — diminished, vulnerable"],
     ["Bird's-eye","straight down from overhead — patterns"],
+    ["Drone Shot","aerial view — scale, reveal, movement"],
     ["Dutch Angle","tilted horizon — unease"],
   ],
   "Movement":[
     ["Locked-off","no movement — stability / observe"],
     ["Push-in","slow move toward subject — tension / focus"],
     ["Pull-out / Reveal","retreat to expose context or isolation"],
-    ["Tracking","follow subject laterally or behind — immersion"],
-    ["Orbiting","circle the subject — reveal & energy"],
+    ["Track","follow subject laterally or behind — immersion"],
+    ["Orbit","circle the subject — reveal & energy"],
     ["Slider","smooth linear glide — depth & parallax"],
     ["Parallax","fg/bg move at different rates — dimension"],
     ["Crane / Boom","vertical rise or fall — establish, lift"],
@@ -469,8 +477,8 @@ Object.entries(LIBRARY).forEach(([cat,shots])=>shots.forEach(([n,d])=>CATLOOKUP[
 const DEFS={
   "Push-in":["Camera physically moves toward the subject (dolly/gimbal walk-in), not a zoom. The frame tightens as the world stays dimensional.","Build tension or draw focus onto a person, object, or realization — great on a key line or reveal.","Move slow and steady; end on a locked composition. A zoom flattens; a push keeps parallax."],
   "Pull-out / Reveal":["Camera retreats away from the subject, opening the frame to expose surrounding context.","Reveal isolation, scale, or a surprise in the environment; good as an ending or transition beat.","Start on a tight detail so the reveal has somewhere to go."],
-  "Tracking":["Camera travels alongside or behind a moving subject, holding them in frame as they move.","Immersion — put the viewer in motion with the subject (walking, driving, running).","Match the subject's speed and keep a consistent side distance; a gimbal or slider smooths it."],
-  "Orbiting":["Camera circles around a stationary or slow subject, keeping it centered.","Add energy, show a subject from all sides, or hero a product/person.","Keep radius constant; lock the subject to frame center and walk a smooth arc."],
+  "Track":["Camera travels alongside or behind a moving subject, holding them in frame as they move.","Immersion — put the viewer in motion with the subject (walking, driving, running).","Match the subject's speed and keep a consistent side distance; a gimbal or slider smooths it."],
+  "Orbit":["Camera circles around a stationary or slow subject, keeping it centered.","Add energy, show a subject from all sides, or hero a product/person.","Keep radius constant; lock the subject to frame center and walk a smooth arc."],
   "Slider":["A short, smooth linear glide (left/right or in/out) on a slider or rail.","Add subtle production value and reveal depth through parallax on static scenes or b-roll.","Put something in the foreground so the parallax reads; short moves look more deliberate."],
   "Parallax":["Foreground and background shift at different rates as the camera moves laterally, creating depth.","Make flat scenes feel three-dimensional; landscape and product b-roll.","Get low and close to a foreground element — the nearer it is, the stronger the effect."],
   "Crane / Boom":["Camera rises or lowers vertically (jib, crane, or drone), changing height rather than distance.","Establish a location, lift emotionally at a climax, or drop into a scene.","Pair the vertical move with a slight tilt to keep the subject framed through the move."],
@@ -490,17 +498,19 @@ const DEFS={
   "Extreme Close-Up":["A very tight frame on a single feature or detail — an eye, a switch, a texture — filling the screen.","Maximum intensity or emphasis; make one small thing feel enormous.","Nail focus and hold steady — at this size any drift or missed focus is glaring."],
   "Two-Shot / Group":["A single frame containing two (or more) subjects together.","Show a relationship, reaction, or interaction without cutting between people.","Mind the spacing between subjects — the gap and their eyelines tell the story."],
   "Locked-off":["A completely static shot on a tripod — no movement at all.","Stability, observation, interviews, or a clean plate for text/graphics.","Kill any drift; a still frame makes motion within the frame pop and reads as intentional."],
-  "Low Shot":["Camera near the ground looking up or across at the subject.","Convey power, scale, and speed — vehicles, suspension, a heroic angle.","Get the lens genuinely low; even a few inches changes the whole feel."],
+  "Low Angle":["Camera positioned below the subject, looking up at it.","Convey power, scale, dominance, and speed — vehicles, suspension, a heroic figure.","Get the lens genuinely low; even a few inches changes the whole feel."],
+  "High Angle":["Camera positioned above the subject, looking down at it.","Make a subject read as smaller, weaker, or vulnerable — the visual inverse of a low angle.","Distinct from bird's-eye: this is a downward-tilted perspective view, not a straight-down 90°."],
   "Insert / Detail":["A tight close-up of an object, texture, or action — often macro.","Cutaways that add detail and cover edits — labels, hands, terminals, tread.","Shoot several; inserts are edit-glue and you always want more than you think."],
   "Rack Focus":["Focus shifts from one plane to another within a single shot.","Direct the viewer's attention from one subject to another without cutting.","Mark your focus points first; do it slow enough to read, fast enough to feel deliberate."],
   "Dutch Angle":["The camera is rolled so the horizon sits at a deliberate tilt.","Unease, tension, or a world that's off-balance.","Commit to a clear angle — a tiny tilt looks like a mistake, not a choice."],
   "Bird's-eye":["Camera looks straight down from directly overhead.","Reveal patterns, geometry, layout, or a god's-eye overview.","A drone or high mount; symmetry and top-down motion make these sing."],
+  "Drone Shot":["An aerial shot captured from a flying drone, from low hover to high altitude.","Establish scale, reveal a landscape, chase a subject, or transition with sweeping motion.","Mind battery and wind; a slow, deliberate move reads far more cinematic than fast jerky flying."],
   "Timelapse":["Frames captured at intervals and sped up, compressing a long span into seconds.","Show passage of time — clouds, tide, a build, a sunset.","Lock the camera solid and use an ND filter; even tiny bumps ruin the sequence."],
   "1X Speed":["Normal, real-time playback — the default speed with no time manipulation.","The baseline for most shots; pick this when you're not slowing, speeding, or lapsing time.","It's the honest default — only reach for the other Time & Speed options when the shot genuinely calls for it."],
   "Hyperlapse":["A moving timelapse — the camera travels between each captured frame.","Compress time and space at once for a dynamic sense of travel.","Pick a fixed anchor point in frame and reposition consistently between shots."],
   "Slow-mo":["Recorded at a high frame rate, played back slow to stretch a moment.","Emphasize action, emotion, or detail — splashes, impacts, reactions.","Shoot 120fps+ in bright light; add extra shutter speed to keep it crisp."],
   "Speed ramp":["Playback speed shifts within one shot — e.g. normal into slow-mo and back.","Punch a specific beat inside a continuous move without cutting.","Shoot at the high frame rate throughout, then ramp in the edit at a natural motion beat."],
-  "Face / CU":["A tight shot on a subject's face.","Emotion, reaction, dialogue — the human beat of a scene.","Focus on the eyes; a touch of shallow depth of field isolates them from the background."]
+  "Face Close Up":["A tight shot on a subject's face.","Emotion, reaction, dialogue — the human beat of a scene.","Focus on the eyes; a touch of shallow depth of field isolates them from the background."]
 };
 
 const PRESETS={
@@ -511,9 +521,9 @@ const PRESETS={
       {name:"Wide / Establishing",dur:12,notes:"Vehicle in the landscape — set scale & terrain",persp:"Objective / Neutral",purpose:"Establishing"},
       {name:"Ground-drag",dur:6,notes:"Low skim over rocks/dirt as tire rolls through",persp:"Objective / Neutral",purpose:"B-roll"},
       {name:"Follow / Chase",dur:10,notes:"Chase behind the truck through the obstacle",persp:"Subjective",purpose:"Action beat"},
-      {name:"Low Shot",dur:6,notes:"Tire flex / suspension articulation, near ground",persp:"Objective / Neutral",purpose:"Insert / Cut-in"},
+      {name:"Low Angle",dur:6,notes:"Tire flex / suspension articulation, near ground",persp:"Objective / Neutral",purpose:"Insert / Cut-in"},
       {name:"Insert / Detail",dur:5,notes:"Mud on tread, winch, badge — texture cutaways",persp:"Objective / Neutral",purpose:"Cutaway"},
-      {name:"Face / CU",dur:6,notes:"Driver reaction at the crux",persp:"Objective / Neutral",purpose:"Reaction"},
+      {name:"Face Close Up",dur:6,notes:"Driver reaction at the crux",persp:"Objective / Neutral",purpose:"Reaction"},
     ]
   },
   "product":{
@@ -521,7 +531,7 @@ const PRESETS={
     gear:["Osmo Pocket 3","Macro lens","Softbox / key light","Turntable","Clean backdrop","Tripod"],
     shots:[
       {name:"Slider",dur:8,notes:"Glide across product on clean surface — reveal depth",persp:"Objective / Neutral",purpose:"B-roll"},
-      {name:"Orbiting",dur:8,notes:"360 around the unit on turntable",persp:"Objective / Neutral",purpose:"Beauty / Hero"},
+      {name:"Orbit",dur:8,notes:"360 around the unit on turntable",persp:"Objective / Neutral",purpose:"Beauty / Hero"},
       {name:"Insert / Detail",dur:6,notes:"Terminals, BMS label, ports — macro",persp:"Objective / Neutral",purpose:"Insert / Cut-in"},
       {name:"Rack Focus",dur:5,notes:"Pull focus terminal -> logo",persp:"Objective / Neutral",purpose:"Beauty / Hero"},
       {name:"Push-in",dur:6,notes:"Slow push to hero the product",persp:"Objective / Neutral",purpose:"Beauty / Hero"},
@@ -534,10 +544,10 @@ const PRESETS={
     shots:[
       {name:"Wide / Establishing",dur:10,notes:"Coastline / horizon — golden hour",persp:"Objective / Neutral",purpose:"Establishing"},
       {name:"Parallax",dur:6,notes:"Foreground grass or rocks against the sea",persp:"Objective / Neutral",purpose:"B-roll"},
-      {name:"Tracking",dur:8,notes:"Walk-along following subject down the sand",persp:"Subjective",purpose:"B-roll"},
+      {name:"Track",dur:8,notes:"Walk-along following subject down the sand",persp:"Subjective",purpose:"B-roll"},
       {name:"Slow-mo",dur:6,notes:"Water splash / spray at 120fps",persp:"Objective / Neutral",purpose:"B-roll"},
       {name:"Timelapse",dur:10,notes:"Clouds or tide over the session",persp:"Objective / Neutral",purpose:"Transition"},
-      {name:"Face / CU",dur:6,notes:"Candid reaction, backlit",persp:"Objective / Neutral",purpose:"Reaction"},
+      {name:"Face Close Up",dur:6,notes:"Candid reaction, backlit",persp:"Objective / Neutral",purpose:"Reaction"},
     ]
   },
   "interview":{
@@ -596,8 +606,8 @@ function optionsHtml(values,selected){
   values.forEach(v=>{h+='<option value="'+v+'"'+(v===selected?' selected':'')+'>'+v+'</option>'});
   return h;
 }
-function makeShot(name,desc,cat,notes,dur,persp,purpose,custom,comp,speed){
-  notes=notes||'';dur=dur||'';persp=persp||'';purpose=purpose||'';comp=comp||'';speed=speed||'';
+function makeShot(name,desc,cat,notes,dur,persp,purpose,custom,comp,speed,title){
+  notes=notes||'';dur=dur||'';persp=persp||'';purpose=purpose||'';comp=comp||'';speed=speed||'';title=title||'';
   const card=document.createElement('div');
   card.className='shot cat-'+cat+(custom?' shot-custom':'');
   card.dataset.name=name;card.dataset.desc=desc;card.dataset.cat=cat;
@@ -613,11 +623,11 @@ function makeShot(name,desc,cat,notes,dur,persp,purpose,custom,comp,speed){
   card.innerHTML='<div class="shot-top">'+
       '<span class="grip" draggable="true">\u22ee\u22ee</span>'+
       '<span class="dot"></span>'+
-      nameHtml+
-      '<span class="shot-desc">'+desc+'</span>'+
+      '<input class="shot-title" placeholder="Short title \u2014 e.g. Gate-to-pool reveal" value="'+title.replace(/"/g,'&quot;')+'">'+
       '<span class="shot-dur"><label>sec</label><input class="dur-in" type="number" min="0" placeholder="\u2013" value="'+dur+'"></span>'+
       '<button class="del" title="Remove">\u00d7</button>'+
     '</div>'+
+    '<div class="shot-id">'+nameHtml+'<span class="shot-desc">'+desc+'</span></div>'+
     '<div class="shot-attrs">'+
       '<span class="attr comp cat-'+compClass+'"><span class="swatch"></span><label>'+compLabel+'</label>'+
         '<select class="comp-sel">'+optionsHtml(compList,comp)+'</select>'+
@@ -721,7 +731,7 @@ function makeScene(opts){
   (opts.shots||[]).forEach(sh=>{
     let arr=Array.isArray(sh)?{name:sh[0],dur:sh[1],notes:sh[2]||''}:Object.assign({},sh);
     if(arr.custom){
-      zone.appendChild(makeShot(arr.name||'',arr.desc||'',arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',true,arr.comp||'',arr.speed||''));
+      zone.appendChild(makeShot(arr.name||'',arr.desc||'',arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',true,arr.comp||'',arr.speed||'',arr.title||''));
       return;
     }
     // migrate legacy cards that are now per-shot attributes
@@ -730,7 +740,7 @@ function makeScene(opts){
       else if(PERSPECTIVES.indexOf(arr.name)>-1){arr.persp=arr.persp||arr.name;arr.name='Shot';}
     }
     const info=CATLOOKUP[arr.name]||{desc:arr.desc||'',cat:arr.cat||'move'};
-    zone.appendChild(makeShot(arr.name,arr.desc||info.desc,info.cat||arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',false,arr.comp||'',arr.speed||''));
+    zone.appendChild(makeShot(arr.name,arr.desc||info.desc,info.cat||arr.cat||'move',arr.notes||'',arr.dur||'',arr.persp||'',arr.purpose||'',false,arr.comp||'',arr.speed||'',arr.title||''));
   });
   refreshEmpty(zone);
   scenesEl.appendChild(scene);
@@ -842,7 +852,8 @@ function serialize(){
         name:s.dataset.name,desc:s.dataset.desc,cat:s.dataset.cat,custom:s.dataset.custom==='1',
         dur:s.querySelector('.dur-in').value,notes:s.querySelector('.shot-notes').value,
         persp:s.querySelector('.persp-sel').value,purpose:s.querySelector('.purpose-sel').value,
-        comp:s.querySelector('.comp-sel').value,speed:s.querySelector('.speed-sel').value
+        comp:s.querySelector('.comp-sel').value,speed:s.querySelector('.speed-sel').value,
+        title:s.querySelector('.shot-title').value
       }))
     });
   });
