@@ -1,2 +1,2 @@
 # shoot-board
-Shoot planning
+Shoot planning 
